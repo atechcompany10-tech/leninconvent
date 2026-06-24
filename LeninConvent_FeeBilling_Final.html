@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lenin Convent — Fee Billing Pro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;min-height:100vh;font-size:14px}
+
+/* ── LOGIN ── */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#1a3a6b,#0d2040)}
+.login-box{background:#fff;border-radius:14px;padding:2.5rem 2rem;width:340px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.login-circle{width:68px;height:68px;background:#1a3a6b;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;border:3px solid #c8a84b}
+.login-circle svg{width:36px;height:36px;fill:#c8a84b}
+.login-school{font-size:14px;font-weight:700;color:#1a3a6b;line-height:1.4;margin-bottom:2px}
+.login-sub{font-size:11px;color:#888}
+.lg{margin-top:14px}
+.lg label{display:block;font-size:12px;font-weight:600;color:#1a3a6b;margin-bottom:4px}
+.lg input{width:100%;padding:9px 12px;border:1.5px solid #dde3ee;border-radius:7px;font-size:13px;outline:none}
+.lg input:focus{border-color:#1a3a6b}
+.login-btn{width:100%;padding:11px;background:#1a3a6b;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-top:1.25rem}
+.login-btn:hover{background:#0d2040}
+.lerr{color:#c0392b;font-size:12px;text-align:center;margin-top:.6rem;display:none}
+
+/* ── APP SHELL ── */
+#app{display:none;min-height:100vh}
+.topbar{background:#1a3a6b;color:#fff;padding:.6rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.tl{display:flex;align-items:center;gap:12px}
+.tlogo{width:34px;height:34px;background:rgba(255,255,255,.1);border:2px solid #c8a84b;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.tlogo svg{width:19px;height:19px;fill:#c8a84b}
+.tschool{font-size:13px;font-weight:700;color:#e8d99a}
+.tsub{font-size:10px;color:rgba(255,255,255,.55)}
+.tr{display:flex;align-items:center;gap:10px}
+.clock-box{font-size:12px;color:rgba(255,255,255,.75);background:rgba(255,255,255,.08);padding:4px 10px;border-radius:5px}
+.lout-btn{padding:5px 13px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600}
+
+/* ── TABS ── */
+.tab-nav{background:#fff;border-bottom:2px solid #dde3ee;padding:0 1.5rem;display:flex;gap:0;overflow-x:auto;position:sticky;top:52px;z-index:90;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.tn{padding:12px 16px;font-size:13px;font-weight:600;cursor:pointer;color:#64748b;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:.15s}
+.tn:hover{color:#1a3a6b;background:#f8f9fb}
+.tn.active{color:#1a3a6b;border-bottom-color:#1a3a6b;background:#f0f4ff}
+.tn .badge-count{background:#c0392b;color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:5px}
+
+/* ── CONTENT ── */
+.tab-content{display:none}.tab-content.active{display:block}
+.main{padding:1.25rem 1.5rem;max-width:1150px;margin:0 auto}
+
+/* ── CARDS ── */
+.card{background:#fff;border-radius:10px;border:1px solid #dde3ee;padding:1.25rem;margin-bottom:1.25rem}
+.card-title{font-size:13px;font-weight:700;color:#1a3a6b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1px solid #f0f4f8;display:flex;align-items:center;justify-content:space-between}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.25rem}
+.stat{background:#fff;border-radius:10px;border:1px solid #dde3ee;padding:.9rem 1.1rem}
+.slabel{font-size:11px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.sval{font-size:22px;font-weight:700;margin-top:3px}
+.sv1{color:#1a3a6b}.sv2{color:#1a7a45}.sv3{color:#c0392b}.sv4{color:#c8a84b}
+
+/* ── FORM ── */
+.fgrid{display:grid;gap:.9rem}
+.fgrid-3{grid-template-columns:repeat(3,1fr)}
+.fgrid-2{grid-template-columns:repeat(2,1fr)}
+.fgrid-4{grid-template-columns:repeat(4,1fr)}
+.ff label{display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:4px}
+.ff input,.ff select,.ff textarea{width:100%;padding:8px 11px;border:1.5px solid #dde3ee;border-radius:7px;font-size:13px;outline:none;font-family:inherit;background:#fff;transition:.15s}
+.ff input:focus,.ff select:focus,.ff textarea:focus{border-color:#1a3a6b;background:#fafcff}
+.ff input[readonly]{background:#f4f6f9;color:#555;cursor:default}
+.ff textarea{resize:vertical;min-height:60px}
+.full{grid-column:1/-1}
+
+/* ── BUTTONS ── */
+.btn{padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:.15s}
+.btn-navy{background:#1a3a6b;color:#fff}.btn-navy:hover{background:#0d2040}
+.btn-green{background:#1a7a45;color:#fff}.btn-green:hover{background:#145c34}
+.btn-red{background:#c0392b;color:#fff}.btn-red:hover{background:#962d22}
+.btn-outline{background:#fff;border:1.5px solid #dde3ee;color:#1a3a6b}.btn-outline:hover{background:#f0f4f8}
+.btn-gold{background:#c8a84b;color:#fff}.btn-gold:hover{background:#a8893d}
+.btn-blue{background:#2c5282;color:#fff}.btn-blue:hover{background:#1e3a5f}
+.btn-teal{background:#0d7377;color:#fff}
+.btn-sm{padding:5px 11px;font-size:12px}
+.btn-xs{padding:3px 8px;font-size:11px}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:8px 11px;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.04em;border-bottom:1.5px solid #dde3ee;background:#f8f9fb;white-space:nowrap}
+td{padding:9px 11px;border-bottom:1px solid #f0f4f8;font-size:13px;color:#1a2744;vertical-align:middle}
+tr:hover td{background:#fafbff}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700}
+.b-green{background:#d1f5e0;color:#1a7a45}
+.b-red{background:#fde8e8;color:#c0392b}
+.b-gray{background:#f0f0f0;color:#555}
+.b-blue{background:#e0eafb;color:#1a3a6b}
+.b-orange{background:#fff3e0;color:#c26a00}
+
+/* ── SEARCH BAR ── */
+.sbar{display:flex;align-items:center;gap:10px;padding:.75rem 1rem;background:#f8f9fb;border-bottom:1px solid #dde3ee;flex-wrap:wrap}
+.sbar input{flex:1;min-width:180px;padding:7px 12px;border:1.5px solid #dde3ee;border-radius:7px;font-size:13px;outline:none}
+.sbar select{padding:7px 10px;border:1.5px solid #dde3ee;border-radius:7px;font-size:13px;outline:none;background:#fff}
+
+/* ── STUDENT LOOKUP ── */
+.lookup-box{background:#f0f4ff;border:2px solid #1a3a6b;border-radius:10px;padding:1.25rem}
+.lookup-result{background:#fff;border-radius:8px;border:1px solid #dde3ee;padding:1rem;margin-top:1rem}
+.lr-name{font-size:18px;font-weight:700;color:#1a3a6b;margin-bottom:.75rem}
+.lr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1rem}
+.lr-stat{background:#f8f9fb;border-radius:8px;padding:.75rem;text-align:center;border:1px solid #dde3ee}
+.lr-stat-label{font-size:11px;color:#888;font-weight:600;text-transform:uppercase}
+.lr-stat-value{font-size:19px;font-weight:700;margin-top:3px}
+
+/* ── MISC ── */
+.err-msg{color:#c0392b;font-size:12px;margin-top:.5rem;display:none}
+.succ-msg{color:#1a7a45;font-size:12px;margin-top:.5rem;display:none}
+.hidden{display:none}
+.empty-state{text-align:center;padding:3rem;color:#aaa;font-size:13px}
+.section-actions{display:flex;gap:8px;flex-wrap:wrap}
+.info-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:#e0eafb;color:#1a3a6b;border-radius:20px;font-size:12px;font-weight:600}
+
+/* ── FOLLOWUP ── */
+.followup-row{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;border-bottom:1px solid #f0f4f8;gap:10px}
+.followup-row:last-child{border-bottom:none}
+.fu-name{font-weight:700;font-size:13px;color:#1a2744}
+.fu-detail{font-size:12px;color:#64748b;margin-top:2px}
+.fu-balance{font-size:15px;font-weight:700;color:#c0392b}
+.fu-note{font-size:12px;padding:5px 9px;border:1.5px solid #dde3ee;border-radius:6px;outline:none;min-width:180px}
+
+/* ── PRINT AREA ── */
+#print-area{display:none}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  body,html{margin:0;padding:0;background:#fff}
+  #login-screen,#app{display:none!important}
+  #print-area{display:block!important;width:210mm;margin:0}
+  @page{size:A4 portrait;margin:8mm}
+}
+</style>
+</head>
+<body>
+
+<div id="print-area"></div>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div class="login-circle">
+        <svg viewBox="0 0 40 40"><path d="M20 4L4 14v4h2v14h4V20h4v12h4V20h4v12h4V18h2v-4L20 4zm0 4l12 8v2H8v-2l12-8z"/></svg>
+      </div>
+      <div class="login-school">Lenin Convent English Medium<br>High School, Srirangapatna</div>
+      <div class="login-sub">Fee Billing Software — Pro</div>
+    </div>
+    <div class="lg"><label>Username</label><input type="text" id="lid" placeholder="Username" autocomplete="off"></div>
+    <div class="lg"><label>Password</label><input type="password" id="lpw" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="login-btn" onclick="doLogin()">&#x1F511; Sign In</button>
+    <div class="lerr" id="lerr">Incorrect username or password.</div>
+  </div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="app">
+
+  <div class="topbar">
+    <div class="tl">
+      <div class="tlogo"><svg viewBox="0 0 40 40"><path d="M20 4L4 14v4h2v14h4V20h4v12h4V20h4v12h4V18h2v-4L20 4zm0 4l12 8v2H8v-2l12-8z"/></svg></div>
+      <div>
+        <div class="tschool">Lenin Convent English Medium High School, Srirangapatna</div>
+        <div class="tsub">Fee Billing &amp; Management Software</div>
+      </div>
+    </div>
+    <div class="tr">
+      <div class="clock-box" id="clock">--</div>
+      <button class="lout-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tab-nav">
+    <div class="tn active" onclick="switchTab('billing')">&#9998; Fee Billing</div>
+    <div class="tn" onclick="switchTab('lookup')">&#128269; Student Ledger</div>
+    <div class="tn" onclick="switchTab('followup')">&#9888; Follow-Up <span class="badge-count" id="followup-count">0</span></div>
+    <div class="tn" onclick="switchTab('history')">&#128197; Payment History</div>
+    <div class="tn" onclick="switchTab('sessions')">&#127979; Sessions &amp; Classes</div>
+    <div class="tn" onclick="switchTab('backup')">&#128190; Backup &amp; Data</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- TAB 1 · FEE BILLING                        -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="tab-content active" id="tab-billing">
+    <div class="main">
+
+      <div class="stats-row" id="stats-row"></div>
+
+      <div class="card">
+        <div class="card-title">New Fee Entry
+          <div class="section-actions">
+            <button class="btn btn-outline btn-sm" onclick="clearForm()">&#x21BA; Clear</button>
+            <button class="btn btn-green" onclick="submitEntry()">&#10003; Save &amp; Generate Receipt</button>
+          </div>
+        </div>
+        <div class="fgrid fgrid-3" style="margin-bottom:.9rem">
+          <div class="ff"><label>Student Name &#42;</label><input type="text" id="f-name" placeholder="Full name" list="student-suggestions"><datalist id="student-suggestions"></datalist></div>
+          <div class="ff"><label>Student ID (optional)</label><input type="text" id="f-sid" placeholder="e.g. STU001"></div>
+          <div class="ff"><label>Class &#42;</label><select id="f-class"><option value="">Select Class</option></select></div>
+          <div class="ff"><label>Section</label><select id="f-section"><option value="">—</option><option>A</option><option>B</option><option>C</option><option>D</option></select></div>
+          <div class="ff"><label>Session &#42;</label><select id="f-session"><option value="">Select Session</option></select></div>
+          <div class="ff">
+            <label>&#128197; Entry Date &#42; <span style="font-weight:400;color:#888;font-size:11px">(change for backdated entry)</span></label>
+            <input type="date" id="f-date" style="width:100%;padding:8px 11px;border:1.5px solid #1a3a6b;border-radius:7px;font-size:13px;outline:none;background:#fafcff">
+          </div>
+          <div class="ff">
+            <label>&#128336; Entry Time</label>
+            <input type="time" id="f-time" style="width:100%;padding:8px 11px;border:1.5px solid #dde3ee;border-radius:7px;font-size:13px;outline:none">
+          </div>
+        </div>
+
+        <!-- SCHOOL FEES -->
+        <div style="font-size:11px;font-weight:700;color:#1a3a6b;text-transform:uppercase;letter-spacing:.06em;padding:.4rem 0 .4rem;border-bottom:1px solid #f0f4f8;margin-bottom:.75rem">&#127979; School Fees</div>
+        <div class="fgrid fgrid-4" style="margin-bottom:.9rem">
+          <div class="ff"><label>Total Annual Fees (&#8377;) &#42;</label><input type="number" id="f-total" placeholder="0" oninput="calcFee()"></div>
+          <div class="ff"><label>Discount (&#8377;)</label><input type="number" id="f-discount" placeholder="0" oninput="calcFee()"></div>
+          <div class="ff"><label>School Fees Paying Now (&#8377;) &#42;</label><input type="number" id="f-paid" placeholder="0" oninput="calcFee()"></div>
+          <div class="ff"><label>School Fee Balance (&#8377;)</label><input type="number" id="f-balance" readonly></div>
+        </div>
+
+        <!-- VAN FEES -->
+        <div style="font-size:11px;font-weight:700;color:#0d7377;text-transform:uppercase;letter-spacing:.06em;padding:.4rem 0 .4rem;border-bottom:1px solid #f0f4f8;margin-bottom:.75rem;display:flex;align-items:center;gap:10px">
+          &#128652; Van / Transport Fees
+          <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#555;text-transform:none;letter-spacing:0;cursor:pointer">
+            <input type="checkbox" id="f-van-enable" onchange="toggleVan()" style="width:15px;height:15px;cursor:pointer"> Enable Van Fees for this entry
+          </label>
+        </div>
+        <div id="van-fields" style="display:none">
+          <div class="fgrid fgrid-4" style="margin-bottom:.9rem;background:#f0fafa;padding:.75rem;border-radius:8px;border:1px solid #c0e8e8">
+            <div class="ff"><label>Van Route / Stop</label><input type="text" id="f-van-route" placeholder="e.g. Mysuru Road"></div>
+            <div class="ff"><label>Van Monthly Fee (&#8377;)</label><input type="number" id="f-van-total" placeholder="0" oninput="calcFee()"></div>
+            <div class="ff"><label>Van Fee Paying Now (&#8377;)</label><input type="number" id="f-van-paid" placeholder="0" oninput="calcFee()"></div>
+            <div class="ff"><label>Van Fee Balance (&#8377;)</label><input type="number" id="f-van-balance" readonly style="background:#f4f6f9"></div>
+          </div>
+        </div>
+
+        <!-- PAYMENT -->
+        <div style="font-size:11px;font-weight:700;color:#1a3a6b;text-transform:uppercase;letter-spacing:.06em;padding:.4rem 0 .4rem;border-bottom:1px solid #f0f4f8;margin-bottom:.75rem">&#128179; Payment Details</div>
+        <div class="fgrid fgrid-4">
+          <div class="ff"><label>Payment Mode &#42;</label><select id="f-mode"><option value="">Select Mode</option><option>Cash</option><option>UPI / GPay</option><option>Cheque</option><option>NEFT / RTGS</option><option>DD</option><option>Card</option></select></div>
+          <div class="ff"><label>Reference / Cheque No.</label><input type="text" id="f-ref" placeholder="Optional"></div>
+          <div class="ff"><label>For Month (e.g. June 2025)</label><input type="text" id="f-month" placeholder="e.g. June 2025"></div>
+          <div class="ff"><label>Remarks / Notes</label><input type="text" id="f-remarks" placeholder="Optional"></div>
+        </div>
+        <div class="err-msg" id="form-err">Please fill all required fields (marked *).</div>
+      </div>
+
+      <!-- RECORDS -->
+      <div class="card" style="padding:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:.9rem 1rem;border-bottom:1px solid #dde3ee;flex-wrap:wrap;gap:8px">
+          <div style="font-size:14px;font-weight:700;color:#1a3a6b">All Fee Records</div>
+          <div class="section-actions">
+            <button class="btn btn-teal btn-sm" onclick="exportExcel()">&#128196; Export to Excel</button>
+            <button class="btn btn-red btn-sm" onclick="clearAll()">&#128465; Clear All</button>
+          </div>
+        </div>
+        <div class="sbar">
+          <input type="text" id="srch" placeholder="&#128269; Search name, ID, class, receipt..." oninput="renderTable()">
+          <select id="srch-session" onchange="renderTable()"><option value="">All Sessions</option></select>
+          <select id="srch-class" onchange="renderTable()"><option value="">All Classes</option></select>
+          <select id="srch-status" onchange="renderTable()"><option value="">All Status</option><option value="pending">Balance Pending</option><option value="cleared">Cleared</option></select>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>#</th><th>Entry Date</th><th>Rcpt No</th><th>Student</th><th>ID</th><th>Class</th><th>Session</th><th>For Month</th>
+              <th>School Fees</th><th>Paid</th><th>School Bal</th><th>Van Paid</th><th>Van Bal</th><th>Mode</th><th>Status</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="records-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- TAB 2 · STUDENT LEDGER / LOOKUP           -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="tab-content" id="tab-lookup">
+    <div class="main">
+      <div class="card">
+        <div class="card-title">Student Ledger — Quick Lookup</div>
+        <div class="lookup-box">
+          <div class="fgrid fgrid-3">
+            <div class="ff"><label>Search by Student Name or ID</label>
+              <input type="text" id="lu-search" placeholder="Type name or student ID..." oninput="lookupSearch()">
+            </div>
+            <div class="ff" style="align-self:flex-end">
+              <button class="btn btn-navy" onclick="lookupSearch()">&#128269; Search</button>
+              <button class="btn btn-outline" onclick="clearLookup()" style="margin-left:6px">Clear</button>
+            </div>
+          </div>
+          <!-- Suggestions dropdown -->
+          <div id="lu-suggestions" style="display:none;background:#fff;border:1.5px solid #dde3ee;border-radius:7px;margin-top:8px;max-height:180px;overflow-y:auto"></div>
+          <!-- Result -->
+          <div id="lu-result" style="display:none">
+            <div class="lookup-result">
+              <div class="lr-name" id="lu-name"></div>
+              <div class="lr-grid" id="lu-stats"></div>
+              <div style="font-size:11px;font-weight:700;color:#1a3a6b;text-transform:uppercase;margin-bottom:.5rem">Full Payment History</div>
+              <div class="tbl-wrap"><table>
+                <thead><tr><th>Date &amp; Time</th><th>Rcpt No</th><th>Session</th><th>Class</th><th>Total Fees</th><th>Paid This Time</th><th>Balance After</th><th>Mode</th><th>Action</th></tr></thead>
+                <tbody id="lu-payments"></tbody>
+              </table></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- TAB 3 · FOLLOW-UP                          -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="tab-content" id="tab-followup">
+    <div class="main">
+      <div class="card" style="padding:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:.9rem 1rem;border-bottom:1px solid #dde3ee;flex-wrap:wrap;gap:8px">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#1a3a6b">Balance Due — Follow-Up Tracker</div>
+            <div style="font-size:12px;color:#888;margin-top:2px">Students with pending fee balance. Add notes for follow-up.</div>
+          </div>
+          <div class="section-actions">
+            <button class="btn btn-teal btn-sm" onclick="exportFollowupExcel()">&#128196; Export</button>
+          </div>
+        </div>
+        <div class="sbar">
+          <input type="text" id="fu-search" placeholder="&#128269; Search name or class..." oninput="renderFollowup()">
+          <select id="fu-class" onchange="renderFollowup()"><option value="">All Classes</option></select>
+          <select id="fu-session" onchange="renderFollowup()"><option value="">All Sessions</option></select>
+        </div>
+        <div id="followup-list" style="padding:.5rem 0"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- TAB 4 · PAYMENT HISTORY                   -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="tab-content" id="tab-history">
+    <div class="main">
+      <div class="card" style="padding:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:.9rem 1rem;border-bottom:1px solid #dde3ee;flex-wrap:wrap;gap:8px">
+          <div style="font-size:14px;font-weight:700;color:#1a3a6b">Payment History — Date Wise</div>
+          <button class="btn btn-teal btn-sm" onclick="exportHistoryExcel()">&#128196; Export</button>
+        </div>
+        <div class="sbar">
+          <input type="text" id="hist-search" placeholder="&#128269; Search..." oninput="renderHistory()">
+          <input type="date" id="hist-from" onchange="renderHistory()" title="From date">
+          <input type="date" id="hist-to" onchange="renderHistory()" title="To date">
+          <button class="btn btn-outline btn-sm" onclick="document.getElementById('hist-from').value='';document.getElementById('hist-to').value='';renderHistory()">Clear Dates</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Time</th><th>Rcpt No</th><th>Student</th><th>ID</th><th>Class</th><th>Session</th><th>Paid (&#8377;)</th><th>Balance (&#8377;)</th><th>Mode</th><th>Actions</th></tr></thead>
+            <tbody id="hist-tbody"></tbody>
+          </table>
+        </div>
+        <div id="hist-summary" style="padding:.9rem 1rem;background:#f8f9fb;border-top:1px solid #dde3ee;font-size:13px;display:flex;gap:1.5rem;flex-wrap:wrap"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- TAB 5 · SESSIONS & CLASSES                 -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="tab-content" id="tab-sessions">
+    <div class="main">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+
+        <!-- SESSIONS -->
+        <div class="card">
+          <div class="card-title">Academic Sessions</div>
+          <div class="fgrid fgrid-2" style="margin-bottom:.9rem">
+            <div class="ff"><label>Session Name (e.g. 2024-25)</label><input type="text" id="new-session" placeholder="2024-25"></div>
+            <div class="ff" style="align-self:flex-end"><button class="btn btn-navy" onclick="addSession()">+ Add Session</button></div>
+          </div>
+          <div id="session-list" class="tbl-wrap">
+            <table><thead><tr><th>#</th><th>Session</th><th>Action</th></tr></thead><tbody id="session-tbody"></tbody></table>
+          </div>
+        </div>
+
+        <!-- CLASSES -->
+        <div class="card">
+          <div class="card-title">Classes / Standards</div>
+          <div class="fgrid fgrid-2" style="margin-bottom:.9rem">
+            <div class="ff"><label>Class Name (e.g. 6th)</label><input type="text" id="new-class" placeholder="e.g. 6th or Play Group"></div>
+            <div class="ff" style="align-self:flex-end"><button class="btn btn-navy" onclick="addClass()">+ Add Class</button></div>
+          </div>
+          <div id="class-list" class="tbl-wrap">
+            <table><thead><tr><th>#</th><th>Class</th><th>Action</th></tr></thead><tbody id="class-tbody"></tbody></table>
+          </div>
+        </div>
+
+        <!-- CHANGE PASSWORD -->
+        <div class="card" style="grid-column:1/-1">
+          <div class="card-title">Change Admin Password</div>
+          <div class="fgrid fgrid-3">
+            <div class="ff"><label>Current Password</label><input type="password" id="cp-cur" placeholder="Current password"></div>
+            <div class="ff"><label>New Password</label><input type="password" id="cp-new" placeholder="New password (min 6 chars)"></div>
+            <div class="ff"><label>Confirm New Password</label><input type="password" id="cp-conf" placeholder="Confirm new password"></div>
+          </div>
+          <button class="btn btn-navy" style="margin-top:.9rem" onclick="changePw()">Update Password</button>
+          <div class="err-msg" id="pw-err"></div>
+          <div class="succ-msg" id="pw-succ"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- TAB 6 · BACKUP & DATA                      -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="tab-content" id="tab-backup">
+    <div class="main">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+
+        <div class="card">
+          <div class="card-title">&#128190; Backup Data</div>
+          <p style="font-size:13px;color:#555;margin-bottom:1rem;line-height:1.6">Download a complete backup of all your fee records, sessions, classes, and settings as a <strong>.json</strong> file. Keep this file safe — you can use it to restore all data anytime.</p>
+          <button class="btn btn-navy" onclick="backupData()">&#8659; Download Backup (.json)</button>
+          <div style="margin-top:.75rem;font-size:12px;color:#888">Last backup: <span id="last-backup-time">Never</span></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">&#8679; Restore Data</div>
+          <p style="font-size:13px;color:#555;margin-bottom:1rem;line-height:1.6">Upload a previously downloaded backup file to restore all data. <strong style="color:#c0392b">Warning: This will replace all current data.</strong></p>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+            <input type="file" id="restore-file" accept=".json" style="display:none" onchange="restoreData(this)">
+            <button class="btn btn-gold" onclick="document.getElementById('restore-file').click()">&#128196; Choose Backup File</button>
+            <span id="restore-filename" style="font-size:12px;color:#888">No file selected</span>
+          </label>
+          <div class="err-msg" id="restore-err"></div>
+          <div class="succ-msg" id="restore-succ"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">&#128196; Export to Excel</div>
+          <p style="font-size:13px;color:#555;margin-bottom:1rem;line-height:1.6">Export all fee records to an Excel spreadsheet with multiple sheets: Fee Records, Follow-Up List, and Summary.</p>
+          <button class="btn btn-teal" onclick="exportExcel()">&#8659; Export All Records (.xlsx)</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="color:#c0392b">&#9888; Danger Zone</div>
+          <p style="font-size:13px;color:#555;margin-bottom:1rem;line-height:1.6">Permanently delete all fee records. Sessions, classes and settings will be kept. <strong style="color:#c0392b">This cannot be undone.</strong> Take a backup first.</p>
+          <button class="btn btn-red" onclick="clearAll()">&#128465; Delete All Fee Records</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div><!-- end app -->
+
+<!-- ═══ RECEIPT MODAL ═══ -->
+<div id="modal-bg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;width:680px;max-width:96vw;max-height:93vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.4)">
+    <div style="padding:1rem 1.5rem;border-bottom:1px solid #dde3ee;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:2">
+      <div style="font-size:15px;font-weight:700;color:#1a3a6b">Fee Receipt</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-blue btn-sm" onclick="doPrint()">&#128424; Print (A4 — 2 per page)</button>
+        <button style="background:none;border:none;font-size:22px;cursor:pointer;color:#666" onclick="closeModal()">&times;</button>
+      </div>
+    </div>
+    <div style="padding:1.5rem" id="modal-body"></div>
+    <div style="padding:.9rem 1.5rem;border-top:1px solid #dde3ee;display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-blue" onclick="doPrint()">&#128424; Print A4 Receipt</button>
+      <button class="btn btn-outline" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// DATA STORE
+// ══════════════════════════════════════════════════
+const STORE = 'lcemhs_pro_v1';
+let DB = loadDB();
+let currentRcpt = null;
+
+function loadDB() {
+  try {
+    const d = localStorage.getItem(STORE);
+    if (d) return JSON.parse(d);
+  } catch(e) {}
+  return {
+    records: [],
+    sessions: ['2023-24','2024-25','2025-26'],
+    classes: ['LKG','UKG','1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th'],
+    followupNotes: {},
+    settings: { pass: 'admin123' },
+    counter: 1000,
+    lastBackup: null
+  };
+}
+function saveDB() {
+  try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch(e) { alert('Storage error: ' + e); }
+}
+
+// ══════════════════════════════════════════════════
+// CLOCK
+// ══════════════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  // Set date & time fields to current if they are empty (first load)
+  const fd = document.getElementById('f-date');
+  const ft = document.getElementById('f-time');
+  if (fd && !fd.value) fd.value = now.toISOString().slice(0,10);
+  if (ft && !ft.value) ft.value = now.toTimeString().slice(0,5);
+  const cl = document.getElementById('clock');
+  if (cl) cl.textContent = now.toLocaleString('en-IN', {weekday:'short',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+setInterval(updateClock, 30000);
+updateClock();
+
+// ══════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════
+function doLogin() {
+  const id = document.getElementById('lid').value.trim();
+  const pw = document.getElementById('lpw').value;
+  DB = loadDB();
+  if (id === 'admin' && pw === DB.settings.pass) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    initApp();
+  } else {
+    const e = document.getElementById('lerr'); e.style.display = 'block';
+    setTimeout(() => e.style.display = 'none', 3000);
+  }
+}
+function doLogout() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('lid').value = '';
+  document.getElementById('lpw').value = '';
+}
+function initApp() {
+  populateDropdowns();
+  renderStats();
+  renderTable();
+  renderSessionList();
+  renderClassList();
+  renderFollowup();
+  renderHistory();
+  updateFollowupBadge();
+  if (DB.lastBackup) document.getElementById('last-backup-time').textContent = fmtDT(DB.lastBackup);
+}
+
+// ══════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════
+function inr(n) { return '\u20B9' + Number(n||0).toLocaleString('en-IN'); }
+function fmtDT(iso) { if (!iso) return '-'; return new Date(iso).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+function fmtDate(iso) { if (!iso) return '-'; return new Date(iso).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
+function fmtTime(iso) { if (!iso) return '-'; return new Date(iso).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}); }
+function genRcpt() { DB.counter = (DB.counter||1000) + 1; return 'RCPT-' + String(DB.counter).padStart(4,'0'); }
+function showMsg(id, msg, isErr) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3000);
+}
+
+// ══════════════════════════════════════════════════
+// DROPDOWNS
+// ══════════════════════════════════════════════════
+function populateDropdowns() {
+  DB = loadDB();
+  // Session dropdowns
+  ['f-session','srch-session','fu-session'].forEach(id => {
+    const el = document.getElementById(id); if (!el) return;
+    const cur = el.value;
+    const isSearch = id.startsWith('srch') || id.startsWith('fu');
+    el.innerHTML = (isSearch ? '<option value="">All Sessions</option>' : '<option value="">Select Session</option>') +
+      DB.sessions.map(s => `<option${s===cur?' selected':''}>${s}</option>`).join('');
+  });
+  // Class dropdowns
+  ['f-class','srch-class','fu-class'].forEach(id => {
+    const el = document.getElementById(id); if (!el) return;
+    const cur = el.value;
+    const isSearch = id.startsWith('srch') || id.startsWith('fu');
+    el.innerHTML = (isSearch ? '<option value="">All Classes</option>' : '<option value="">Select Class</option>') +
+      DB.classes.map(c => `<option${c===cur?' selected':''}>${c}</option>`).join('');
+  });
+  // Suggestions datalist
+  const dl = document.getElementById('student-suggestions');
+  if (dl) {
+    const names = [...new Set((DB.records||[]).map(r => r.name))];
+    dl.innerHTML = names.map(n => `<option value="${n}">`).join('');
+  }
+}
+
+// ══════════════════════════════════════════════════
+// TAB SWITCHING
+// ══════════════════════════════════════════════════
+function switchTab(id) {
+  document.querySelectorAll('.tn').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (id === 'followup') renderFollowup();
+  if (id === 'history') renderHistory();
+  if (id === 'sessions') { renderSessionList(); renderClassList(); }
+}
+
+// ══════════════════════════════════════════════════
+// FEE FORM
+// ══════════════════════════════════════════════════
+function toggleVan() {
+  const on = document.getElementById('f-van-enable').checked;
+  document.getElementById('van-fields').style.display = on ? 'block' : 'none';
+  if (!on) {
+    ['f-van-route','f-van-total','f-van-paid','f-van-balance'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  }
+  calcFee();
+}
+function calcFee() {
+  const t = Number(document.getElementById('f-total').value||0);
+  const d = Number(document.getElementById('f-discount').value||0);
+  const p = Number(document.getElementById('f-paid').value||0);
+  document.getElementById('f-balance').value = Math.max(0, t - d - p);
+  if (document.getElementById('f-van-enable').checked) {
+    const vt = Number(document.getElementById('f-van-total').value||0);
+    const vp = Number(document.getElementById('f-van-paid').value||0);
+    document.getElementById('f-van-balance').value = Math.max(0, vt - vp);
+  }
+}
+function clearForm() {
+  ['f-name','f-sid','f-total','f-discount','f-paid','f-balance','f-ref','f-remarks','f-month',
+   'f-van-route','f-van-total','f-van-paid','f-van-balance'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  ['f-class','f-section','f-session','f-mode'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.selectedIndex = 0;
+  });
+  document.getElementById('f-van-enable').checked = false;
+  document.getElementById('van-fields').style.display = 'none';
+  // Reset date/time to now
+  const now = new Date();
+  document.getElementById('f-date').value = now.toISOString().slice(0,10);
+  document.getElementById('f-time').value = now.toTimeString().slice(0,5);
+}
+function submitEntry() {
+  const name = document.getElementById('f-name').value.trim();
+  const cls = document.getElementById('f-class').value;
+  const session = document.getElementById('f-session').value;
+  const total = Number(document.getElementById('f-total').value||0);
+  const paid = Number(document.getElementById('f-paid').value||0);
+  const mode = document.getElementById('f-mode').value;
+  const dateVal = document.getElementById('f-date').value;
+  const timeVal = document.getElementById('f-time').value || '00:00';
+  const errEl = document.getElementById('form-err');
+  if (!name||!cls||!session||!total||!mode||!dateVal) {
+    errEl.style.display = 'block'; setTimeout(() => errEl.style.display = 'none', 3000); return;
+  }
+  DB = loadDB();
+  const discount = Number(document.getElementById('f-discount').value||0);
+  const balance = Math.max(0, total - discount - paid);
+  const rcptNo = genRcpt();
+  // Build entry datetime from selected date + time
+  const entryDT = new Date(dateVal + 'T' + timeVal + ':00').toISOString();
+  // Van fees
+  const vanEnabled = document.getElementById('f-van-enable').checked;
+  const vanTotal = vanEnabled ? Number(document.getElementById('f-van-total').value||0) : 0;
+  const vanPaid = vanEnabled ? Number(document.getElementById('f-van-paid').value||0) : 0;
+  const vanBalance = vanEnabled ? Math.max(0, vanTotal - vanPaid) : 0;
+  const vanRoute = vanEnabled ? document.getElementById('f-van-route').value.trim() : '';
+  const record = {
+    id: 'R' + Date.now(),
+    rcptNo, dt: entryDT,
+    name, sid: document.getElementById('f-sid').value.trim(),
+    class: cls, section: document.getElementById('f-section').value||'',
+    session, total, discount, paid, balance, mode,
+    ref: document.getElementById('f-ref').value,
+    remarks: document.getElementById('f-remarks').value,
+    forMonth: document.getElementById('f-month').value.trim(),
+    vanEnabled, vanTotal, vanPaid, vanBalance, vanRoute
+  };
+  DB.records.push(record);
+  saveDB();
+  clearForm();
+  populateDropdowns();
+  renderStats();
+  renderTable();
+  updateFollowupBadge();
+  showReceiptModal(rcptNo);
+}
+
+// ══════════════════════════════════════════════════
+// STATS
+// ══════════════════════════════════════════════════
+function renderStats() {
+  DB = loadDB();
+  const r = DB.records||[];
+  const tT = r.reduce((a,x) => a+Number(x.total||0), 0);
+  const tP = r.reduce((a,x) => a+Number(x.paid||0), 0);
+  const tB = r.reduce((a,x) => a+Number(x.balance||0), 0);
+  const tD = r.reduce((a,x) => a+Number(x.discount||0), 0);
+  const tVP = r.filter(x=>x.vanEnabled).reduce((a,x) => a+Number(x.vanPaid||0), 0);
+  const tVB = r.filter(x=>x.vanEnabled).reduce((a,x) => a+Number(x.vanBalance||0), 0);
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat"><div class="slabel">Total Records</div><div class="sval sv1">${r.length}</div></div>
+    <div class="stat"><div class="slabel">School Fees Collected</div><div class="sval sv2">${inr(tP)}</div></div>
+    <div class="stat"><div class="slabel">School Fee Balance</div><div class="sval sv3">${inr(tB)}</div></div>
+    <div class="stat"><div class="slabel">Van Fees Collected</div><div class="sval sv4">${inr(tVP)}<span style="font-size:11px;color:#c0392b;display:block;margin-top:2px">Due: ${inr(tVB)}</span></div></div>`;
+}
+
+// ══════════════════════════════════════════════════
+// RECORDS TABLE
+// ══════════════════════════════════════════════════
+function renderTable() {
+  DB = loadDB();
+  const q = (document.getElementById('srch').value||'').toLowerCase();
+  const ss = document.getElementById('srch-session').value;
+  const sc = document.getElementById('srch-class').value;
+  const st = document.getElementById('srch-status').value;
+  const rows = (DB.records||[]).slice().reverse().filter(r => {
+    const mq = !q || (r.name||'').toLowerCase().includes(q) || (r.sid||'').toLowerCase().includes(q) ||
+                (r.class||'').toLowerCase().includes(q) || (r.rcptNo||'').toLowerCase().includes(q);
+    const ms = !ss || r.session === ss;
+    const mc = !sc || r.class === sc;
+    const mst = !st || (st==='pending' && r.balance>0) || (st==='cleared' && r.balance<=0);
+    return mq && ms && mc && mst;
+  });
+  document.getElementById('records-tbody').innerHTML = rows.length ? rows.map((r,i) => `
+    <tr>
+      <td style="color:#aaa">${rows.length-i}</td>
+      <td style="font-size:11px">${fmtDT(r.dt)}</td>
+      <td style="font-weight:700;color:#1a3a6b">${r.rcptNo}</td>
+      <td style="font-weight:600">${r.name}</td>
+      <td style="color:#888">${r.sid||'-'}</td>
+      <td>${r.class}${r.section?' '+r.section:''}</td>
+      <td><span class="badge b-blue">${r.session}</span></td>
+      <td style="font-size:12px;color:#555">${r.forMonth||'-'}</td>
+      <td>${inr(r.total)}</td>
+      <td style="color:#1a7a45;font-weight:700">${inr(r.paid)}</td>
+      <td style="font-weight:700;color:${r.balance>0?'#c0392b':'#1a7a45'}">${inr(r.balance)}</td>
+      <td style="color:${r.vanEnabled?'#0d7377':'#aaa'};font-weight:600">${r.vanEnabled?inr(r.vanPaid):'-'}</td>
+      <td style="font-weight:700;color:${r.vanEnabled&&r.vanBalance>0?'#c0392b':r.vanEnabled?'#1a7a45':'#aaa'}">${r.vanEnabled?inr(r.vanBalance):'-'}</td>
+      <td><span class="badge b-gray">${r.mode}</span></td>
+      <td><span class="badge ${(r.balance>0||(r.vanEnabled&&r.vanBalance>0))?'b-red':'b-green'}">${(r.balance>0||(r.vanEnabled&&r.vanBalance>0))?'Pending':'Cleared'}</span></td>
+      <td style="display:flex;gap:4px">
+        <button class="btn btn-gold btn-xs" onclick="showReceiptModal('${r.rcptNo}')">&#128065;</button>
+        <button class="btn btn-blue btn-xs" onclick="quickPrint('${r.rcptNo}')">&#128424;</button>
+        <button class="btn btn-red btn-xs" onclick="deleteRecord('${r.id}')">&#128465;</button>
+      </td>
+    </tr>`).join('') :
+    '<tr><td colspan="16" class="empty-state">No records found.</td></tr>';
+}
+
+function deleteRecord(id) {
+  if (!confirm('Delete this record?')) return;
+  DB.records = DB.records.filter(x => x.id !== id);
+  saveDB(); renderStats(); renderTable(); updateFollowupBadge();
+}
+function clearAll() {
+  if (!confirm('Delete ALL fee records permanently? Take a backup first!')) return;
+  if (!confirm('Final confirmation — really delete everything?')) return;
+  DB.records = []; DB.counter = 1000; saveDB();
+  renderStats(); renderTable(); updateFollowupBadge(); renderHistory(); renderFollowup();
+}
+
+// ══════════════════════════════════════════════════
+// STUDENT LEDGER / LOOKUP
+// ══════════════════════════════════════════════════
+function lookupSearch() {
+  const q = (document.getElementById('lu-search').value||'').trim().toLowerCase();
+  if (!q) { clearLookup(); return; }
+  DB = loadDB();
+  // Group records by student name+sid
+  const students = {};
+  (DB.records||[]).forEach(r => {
+    const key = r.name.toLowerCase();
+    if (!students[key]) students[key] = { name: r.name, sid: r.sid||'', records: [] };
+    students[key].records.push(r);
+  });
+  const matches = Object.values(students).filter(s =>
+    s.name.toLowerCase().includes(q) || s.sid.toLowerCase().includes(q)
+  );
+  const sug = document.getElementById('lu-suggestions');
+  if (matches.length === 0) {
+    sug.innerHTML = '<div style="padding:.75rem;color:#888;font-size:13px">No student found.</div>';
+    sug.style.display = 'block';
+    document.getElementById('lu-result').style.display = 'none';
+    return;
+  }
+  if (matches.length === 1) {
+    sug.style.display = 'none';
+    showLedger(matches[0]);
+  } else {
+    sug.style.display = 'block';
+    sug.innerHTML = matches.map(s =>
+      `<div style="padding:.6rem 1rem;cursor:pointer;border-bottom:1px solid #f0f4f8;font-size:13px" onmousedown="selectLedgerStudent('${s.name}')">${s.name}${s.sid?' ('+s.sid+')':''}</div>`
+    ).join('');
+    document.getElementById('lu-result').style.display = 'none';
+  }
+}
+function selectLedgerStudent(name) {
+  DB = loadDB();
+  const records = (DB.records||[]).filter(r => r.name.toLowerCase() === name.toLowerCase());
+  document.getElementById('lu-suggestions').style.display = 'none';
+  showLedger({ name, sid: records[0]?.sid||'', records });
+}
+function showLedger(student) {
+  const recs = student.records.slice().sort((a,b) => new Date(a.dt)-new Date(b.dt));
+  const totalFees = Math.max(...recs.map(r => r.total));
+  const totalPaid = recs.reduce((a,r) => a + r.paid, 0);
+  const totalDiscount = recs.reduce((a,r) => a + (r.discount||0), 0);
+  const latestBalance = recs.length ? recs[recs.length-1].balance : 0;
+
+  document.getElementById('lu-name').innerHTML =
+    `${student.name} ${student.sid ? '<span class="info-pill">ID: '+student.sid+'</span>':''} — ${recs[0]?.class||''} ${recs[0]?.section||''}`;
+
+  document.getElementById('lu-stats').innerHTML = `
+    <div class="lr-stat"><div class="lr-stat-label">Total Fees</div><div class="lr-stat-value sv1">${inr(totalFees)}</div></div>
+    <div class="lr-stat"><div class="lr-stat-label">Discount</div><div class="lr-stat-value sv4">${inr(totalDiscount)}</div></div>
+    <div class="lr-stat"><div class="lr-stat-label">Total Paid</div><div class="lr-stat-value sv2">${inr(totalPaid)}</div></div>
+    <div class="lr-stat"><div class="lr-stat-label">Balance Due</div><div class="lr-stat-value ${latestBalance>0?'sv3':'sv2'}">${inr(latestBalance)}</div></div>`;
+
+  document.getElementById('lu-payments').innerHTML = recs.map(r => `
+    <tr>
+      <td style="font-size:12px">${fmtDT(r.dt)}</td>
+      <td style="font-weight:700;color:#1a3a6b">${r.rcptNo}</td>
+      <td>${r.session}</td>
+      <td>${r.class}${r.section?' '+r.section:''}</td>
+      <td>${inr(r.total)}</td>
+      <td style="color:#1a7a45;font-weight:700">${inr(r.paid)}</td>
+      <td style="font-weight:700;color:${r.balance>0?'#c0392b':'#1a7a45'}">${inr(r.balance)}</td>
+      <td>${r.mode}</td>
+      <td style="display:flex;gap:4px">
+        <button class="btn btn-gold btn-xs" onclick="showReceiptModal('${r.rcptNo}')">&#128065;</button>
+        <button class="btn btn-blue btn-xs" onclick="quickPrint('${r.rcptNo}')">&#128424;</button>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="9" class="empty-state">No records.</td></tr>';
+
+  document.getElementById('lu-result').style.display = 'block';
+}
+function clearLookup() {
+  document.getElementById('lu-search').value = '';
+  document.getElementById('lu-suggestions').style.display = 'none';
+  document.getElementById('lu-result').style.display = 'none';
+}
+
+// ══════════════════════════════════════════════════
+// FOLLOW-UP
+// ══════════════════════════════════════════════════
+function updateFollowupBadge() {
+  DB = loadDB();
+  // Latest balance per student
+  const studentMap = {};
+  (DB.records||[]).forEach(r => {
+    if (!studentMap[r.name] || new Date(r.dt) > new Date(studentMap[r.name].dt)) studentMap[r.name] = r;
+  });
+  const pending = Object.values(studentMap).filter(r => r.balance > 0).length;
+  const badge = document.getElementById('followup-count');
+  if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? 'inline' : 'none'; }
+}
+function renderFollowup() {
+  DB = loadDB();
+  const q = (document.getElementById('fu-search').value||'').toLowerCase();
+  const fc = document.getElementById('fu-class').value;
+  const fs = document.getElementById('fu-session').value;
+
+  // Get latest record per student
+  const studentMap = {};
+  (DB.records||[]).forEach(r => {
+    if (!studentMap[r.name] || new Date(r.dt) > new Date(studentMap[r.name].dt)) studentMap[r.name] = r;
+  });
+  let pending = Object.values(studentMap).filter(r => {
+    return r.balance > 0 &&
+      (!q || r.name.toLowerCase().includes(q)) &&
+      (!fc || r.class === fc) &&
+      (!fs || r.session === fs);
+  }).sort((a,b) => b.balance - a.balance);
+
+  const list = document.getElementById('followup-list');
+  if (!pending.length) {
+    list.innerHTML = '<div class="empty-state" style="padding:3rem">&#10003; No pending balances! All fees cleared.</div>'; return;
+  }
+  list.innerHTML = pending.map(r => {
+    const note = DB.followupNotes[r.id]||'';
+    return `
+      <div class="followup-row">
+        <div style="min-width:180px">
+          <div class="fu-name">${r.name} ${r.sid?'<span class="badge b-blue" style="font-size:10px">'+r.sid+'</span>':''}</div>
+          <div class="fu-detail">Class ${r.class}${r.section?' '+r.section:''} &nbsp;|&nbsp; Session: ${r.session} &nbsp;|&nbsp; Last paid: ${fmtDate(r.dt)}</div>
+        </div>
+        <div style="min-width:100px;text-align:center">
+          <div class="fu-balance">${inr(r.balance)}</div>
+          <div style="font-size:11px;color:#888">balance due</div>
+        </div>
+        <div style="flex:1;min-width:200px">
+          <input class="fu-note" placeholder="Follow-up note..." value="${note.replace(/"/g,'&quot;')}" onchange="saveFuNote('${r.id}',this.value)" style="width:100%">
+        </div>
+        <div style="display:flex;gap:5px;flex-shrink:0">
+          <button class="btn btn-gold btn-xs" onclick="showReceiptModal('${r.rcptNo}')">&#128065; Receipt</button>
+          <button class="btn btn-blue btn-xs" onclick="quickPrint('${r.rcptNo}')">&#128424; Print</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+function saveFuNote(id, val) {
+  DB = loadDB();
+  if (!DB.followupNotes) DB.followupNotes = {};
+  DB.followupNotes[id] = val;
+  saveDB();
+}
+
+// ══════════════════════════════════════════════════
+// PAYMENT HISTORY
+// ══════════════════════════════════════════════════
+function renderHistory() {
+  DB = loadDB();
+  const q = (document.getElementById('hist-search').value||'').toLowerCase();
+  const fromVal = document.getElementById('hist-from').value;
+  const toVal = document.getElementById('hist-to').value;
+  const from = fromVal ? new Date(fromVal) : null;
+  const to = toVal ? new Date(toVal + 'T23:59:59') : null;
+
+  const rows = (DB.records||[]).slice().sort((a,b) => new Date(b.dt)-new Date(a.dt)).filter(r => {
+    const d = new Date(r.dt);
+    const mq = !q || (r.name||'').toLowerCase().includes(q) || (r.rcptNo||'').toLowerCase().includes(q) || (r.sid||'').toLowerCase().includes(q);
+    const mf = !from || d >= from;
+    const mt = !to || d <= to;
+    return mq && mf && mt;
+  });
+
+  document.getElementById('hist-tbody').innerHTML = rows.length ? rows.map(r => `
+    <tr>
+      <td style="font-weight:600">${fmtDate(r.dt)}</td>
+      <td style="color:#888">${fmtTime(r.dt)}</td>
+      <td style="font-weight:700;color:#1a3a6b">${r.rcptNo}</td>
+      <td style="font-weight:600">${r.name}</td>
+      <td style="color:#888;font-size:12px">${r.sid||'-'}</td>
+      <td>${r.class}${r.section?' '+r.section:''}</td>
+      <td><span class="badge b-blue">${r.session}</span></td>
+      <td style="color:#1a7a45;font-weight:700">${inr(r.paid)}</td>
+      <td style="font-weight:700;color:${r.balance>0?'#c0392b':'#1a7a45'}">${inr(r.balance)}</td>
+      <td><span class="badge b-gray">${r.mode}</span></td>
+      <td style="display:flex;gap:4px">
+        <button class="btn btn-gold btn-xs" onclick="showReceiptModal('${r.rcptNo}')">&#128065;</button>
+        <button class="btn btn-blue btn-xs" onclick="quickPrint('${r.rcptNo}')">&#128424;</button>
+      </td>
+    </tr>`).join('') :
+    '<tr><td colspan="11" class="empty-state">No records found for the selected range.</td></tr>';
+
+  const totalPaid = rows.reduce((a,r) => a+r.paid, 0);
+  const totalBal = rows.reduce((a,r) => a+r.balance, 0);
+  document.getElementById('hist-summary').innerHTML = rows.length ? `
+    <span><strong>${rows.length}</strong> payments shown</span>
+    <span style="color:#1a7a45"><strong>Total Collected: ${inr(totalPaid)}</strong></span>
+    <span style="color:#c0392b"><strong>Total Balance: ${inr(totalBal)}</strong></span>` : '';
+}
+
+// ══════════════════════════════════════════════════
+// SESSIONS & CLASSES
+// ══════════════════════════════════════════════════
+function addSession() {
+  const val = document.getElementById('new-session').value.trim();
+  if (!val) return;
+  DB = loadDB();
+  if (!DB.sessions.includes(val)) { DB.sessions.push(val); saveDB(); }
+  document.getElementById('new-session').value = '';
+  renderSessionList(); populateDropdowns();
+}
+function addSession_enter(e) { if(e.key==='Enter') addSession(); }
+function deleteSession(idx) {
+  DB = loadDB(); DB.sessions.splice(idx,1); saveDB(); renderSessionList(); populateDropdowns();
+}
+function renderSessionList() {
+  DB = loadDB();
+  document.getElementById('session-tbody').innerHTML = DB.sessions.length ?
+    DB.sessions.map((s,i) => `<tr><td style="color:#aaa">${i+1}</td><td style="font-weight:600">${s}</td><td><button class="btn btn-red btn-xs" onclick="deleteSession(${i})">&#128465;</button></td></tr>`).join('') :
+    '<tr><td colspan="3" class="empty-state">No sessions added.</td></tr>';
+}
+function addClass() {
+  const val = document.getElementById('new-class').value.trim();
+  if (!val) return;
+  DB = loadDB();
+  if (!DB.classes.includes(val)) { DB.classes.push(val); saveDB(); }
+  document.getElementById('new-class').value = '';
+  renderClassList(); populateDropdowns();
+}
+function deleteClass(idx) {
+  DB = loadDB(); DB.classes.splice(idx,1); saveDB(); renderClassList(); populateDropdowns();
+}
+function renderClassList() {
+  DB = loadDB();
+  document.getElementById('class-tbody').innerHTML = DB.classes.length ?
+    DB.classes.map((c,i) => `<tr><td style="color:#aaa">${i+1}</td><td style="font-weight:600">${c}</td><td><button class="btn btn-red btn-xs" onclick="deleteClass(${i})">&#128465;</button></td></tr>`).join('') :
+    '<tr><td colspan="3" class="empty-state">No classes added.</td></tr>';
+}
+
+// ══════════════════════════════════════════════════
+// CHANGE PASSWORD
+// ══════════════════════════════════════════════════
+function changePw() {
+  DB = loadDB();
+  const cur = document.getElementById('cp-cur').value;
+  const nw = document.getElementById('cp-new').value;
+  const cf = document.getElementById('cp-conf').value;
+  if (cur !== DB.settings.pass) { showMsg('pw-err','Current password is incorrect.',true); return; }
+  if (nw.length < 6) { showMsg('pw-err','New password must be at least 6 characters.',true); return; }
+  if (nw !== cf) { showMsg('pw-err','Passwords do not match.',true); return; }
+  DB.settings.pass = nw; saveDB();
+  document.getElementById('pw-err').style.display = 'none';
+  document.getElementById('pw-succ').textContent = 'Password updated successfully!';
+  document.getElementById('pw-succ').style.display = 'block';
+  setTimeout(() => document.getElementById('pw-succ').style.display = 'none', 3000);
+  ['cp-cur','cp-new','cp-conf'].forEach(id => document.getElementById(id).value = '');
+}
+
+// ══════════════════════════════════════════════════
+// BACKUP & RESTORE
+// ══════════════════════════════════════════════════
+function backupData() {
+  DB = loadDB();
+  DB.lastBackup = new Date().toISOString();
+  saveDB();
+  const blob = new Blob([JSON.stringify(DB, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'LeninConvent_Backup_' + new Date().toLocaleDateString('en-IN').replace(/\//g,'-') + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  document.getElementById('last-backup-time').textContent = fmtDT(DB.lastBackup);
+}
+function restoreData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('restore-filename').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.records) throw new Error('Invalid backup file.');
+      if (!confirm('This will replace ALL current data with the backup. Continue?')) return;
+      localStorage.setItem(STORE, JSON.stringify(data));
+      DB = loadDB();
+      initApp();
+      document.getElementById('restore-succ').textContent = 'Data restored successfully! ' + data.records.length + ' records loaded.';
+      document.getElementById('restore-succ').style.display = 'block';
+      setTimeout(() => document.getElementById('restore-succ').style.display = 'none', 4000);
+    } catch(err) {
+      document.getElementById('restore-err').textContent = 'Error: ' + err.message;
+      document.getElementById('restore-err').style.display = 'block';
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+// ══════════════════════════════════════════════════
+// EXPORT TO EXCEL
+// ══════════════════════════════════════════════════
+function exportExcel() {
+  DB = loadDB();
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: All Records
+  const headers = ['Rcpt No','Date & Time','Student Name','Student ID','Class','Section','Session','For Month',
+    'Total School Fees','Discount','School Fee Paid','School Fee Balance',
+    'Van Enabled','Van Route','Van Total Fee','Van Fee Paid','Van Fee Balance',
+    'Payment Mode','Ref No','Remarks','Status'];
+  const data = (DB.records||[]).slice().reverse().map(r => [
+    r.rcptNo, fmtDT(r.dt), r.name, r.sid||'', r.class, r.section||'', r.session, r.forMonth||'',
+    r.total, r.discount||0, r.paid, r.balance,
+    r.vanEnabled?'Yes':'No', r.vanRoute||'', r.vanEnabled?r.vanTotal:0, r.vanEnabled?r.vanPaid:0, r.vanEnabled?r.vanBalance:0,
+    r.mode, r.ref||'', r.remarks||'',
+    (r.balance>0||(r.vanEnabled&&r.vanBalance>0)) ? 'Pending' : 'Cleared'
+  ]);
+  const ws1 = XLSX.utils.aoa_to_sheet([headers, ...data]);
+  ws1['!cols'] = [10,18,20,12,8,8,10,12,12,10,12,12,10,14,12,12,12,14,14,20,10].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ws1, 'Fee Records');
+
+  // Sheet 2: Follow-Up (Pending Balances)
+  const studentMap = {};
+  (DB.records||[]).forEach(r => {
+    if (!studentMap[r.name] || new Date(r.dt) > new Date(studentMap[r.name].dt)) studentMap[r.name] = r;
+  });
+  const pending = Object.values(studentMap).filter(r => r.balance > 0).sort((a,b) => b.balance - a.balance);
+  const fuHeaders = ['Student Name','Student ID','Class','Session','Total Fees','Total Paid','Balance Due','Last Payment Date','Follow-Up Note'];
+  const fuData = pending.map(r => {
+    const allPmts = (DB.records||[]).filter(x => x.name === r.name);
+    const totalPaid = allPmts.reduce((a,x) => a+x.paid, 0);
+    return [r.name, r.sid||'', r.class+(r.section?' '+r.section:''), r.session, r.total, totalPaid, r.balance, fmtDate(r.dt), DB.followupNotes?.[r.id]||''];
+  });
+  const ws2 = XLSX.utils.aoa_to_sheet([fuHeaders, ...fuData]);
+  ws2['!cols'] = [22,12,10,10,12,12,12,18,30].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ws2, 'Follow-Up (Pending)');
+
+  // Sheet 3: Summary
+  const totalR = DB.records.length;
+  const totalPaid = DB.records.reduce((a,r)=>a+r.paid,0);
+  const totalBal = DB.records.reduce((a,r)=>a+r.balance,0);
+  const totalDisc = DB.records.reduce((a,r)=>a+(r.discount||0),0);
+  const ws3 = XLSX.utils.aoa_to_sheet([
+    ['Lenin Convent English Medium High School, Srirangapatna'],
+    ['Fee Summary Report', '', '', new Date().toLocaleDateString('en-IN')],
+    [],
+    ['Total Records', totalR],
+    ['Total Amount Collected', totalPaid],
+    ['Total Balance Due', totalBal],
+    ['Total Discount Given', totalDisc],
+    ['Students with Pending Balance', pending.length],
+  ]);
+  ws3['!cols'] = [{wch:30},{wch:18}];
+  XLSX.utils.book_append_sheet(wb, ws3, 'Summary');
+
+  XLSX.writeFile(wb, 'LeninConvent_FeeRecords_' + new Date().toLocaleDateString('en-IN').replace(/\//g,'-') + '.xlsx');
+}
+
+function exportFollowupExcel() {
+  DB = loadDB();
+  const wb = XLSX.utils.book_new();
+  const studentMap = {};
+  (DB.records||[]).forEach(r => {
+    if (!studentMap[r.name] || new Date(r.dt) > new Date(studentMap[r.name].dt)) studentMap[r.name] = r;
+  });
+  const pending = Object.values(studentMap).filter(r => r.balance > 0).sort((a,b) => b.balance - a.balance);
+  const headers = ['Student Name','Student ID','Class','Session','Balance Due','Last Payment','Follow-Up Note'];
+  const data = pending.map(r => [r.name, r.sid||'', r.class+(r.section?' '+r.section:''), r.session, r.balance, fmtDate(r.dt), DB.followupNotes?.[r.id]||'']);
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
+  ws['!cols'] = [22,12,10,10,12,14,30].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ws, 'Follow-Up');
+  XLSX.writeFile(wb, 'FollowUp_PendingFees.xlsx');
+}
+
+function exportHistoryExcel() {
+  DB = loadDB();
+  const q = (document.getElementById('hist-search').value||'').toLowerCase();
+  const fromVal = document.getElementById('hist-from').value;
+  const toVal = document.getElementById('hist-to').value;
+  const from = fromVal ? new Date(fromVal) : null;
+  const to = toVal ? new Date(toVal + 'T23:59:59') : null;
+  const rows = (DB.records||[]).slice().sort((a,b) => new Date(b.dt)-new Date(a.dt)).filter(r => {
+    const d = new Date(r.dt);
+    const mq = !q || (r.name||'').toLowerCase().includes(q);
+    return mq && (!from||d>=from) && (!to||d<=to);
+  });
+  const headers = ['Date','Time','Rcpt No','Student Name','ID','Class','Session','Paid','Balance','Mode'];
+  const data = rows.map(r => [fmtDate(r.dt),fmtTime(r.dt),r.rcptNo,r.name,r.sid||'',r.class+(r.section?' '+r.section:''),r.session,r.paid,r.balance,r.mode]);
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet([headers,...data]);
+  ws['!cols'] = [14,10,12,20,12,10,10,12,12,14].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ws, 'Payment History');
+  XLSX.writeFile(wb, 'PaymentHistory.xlsx');
+}
+
+// ══════════════════════════════════════════════════
+// RECEIPT
+// ══════════════════════════════════════════════════
+function buildReceiptHTML(r) {
+  const bal = r.balance||0;
+  const vBal = r.vanEnabled ? (r.vanBalance||0) : 0;
+  const totalBal = bal + vBal;
+  return `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:5px;border-bottom:2px solid #1a3a6b;margin-bottom:5px">
+      <div>
+        <div style="font-size:14pt;font-weight:800;color:#1a3a6b">Lenin Convent English Medium High School</div>
+        <div style="font-size:8pt;color:#555">Srirangapatna, Karnataka &nbsp;|&nbsp; Affiliated to Karnataka Secondary Education Examination Board</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11pt;font-weight:700;color:#c8a84b;text-transform:uppercase">Fee Receipt</div>
+        <div style="font-size:9pt;color:#1a3a6b;font-weight:700">${r.rcptNo}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px">
+      <div>
+        <div style="display:flex;gap:6px;padding:2.5px 0;font-size:8.5pt;border-bottom:1px dashed #eee"><span style="color:#666;min-width:90px;font-size:8pt">Student Name</span><span style="font-weight:600">${r.name}</span></div>
+        <div style="display:flex;gap:6px;padding:2.5px 0;font-size:8.5pt;border-bottom:1px dashed #eee"><span style="color:#666;min-width:90px;font-size:8pt">Class &amp; Section</span><span style="font-weight:600">${r.class}${r.section?' '+r.section:''}</span></div>
+        <div style="display:flex;gap:6px;padding:2.5px 0;font-size:8.5pt;border-bottom:1px dashed #eee"><span style="color:#666;min-width:90px;font-size:8pt">Session</span><span style="font-weight:600">${r.session}</span></div>
+        ${r.sid?`<div style="display:flex;gap:6px;padding:2.5px 0;font-size:8.5pt;border-bottom:1px dashed #eee"><span style="color:#666;min-width:90px;font-size:8pt">Student ID</span><span style="font-weight:600">${r.sid}</span></div>`:''}
+        ${r.forMonth?`<div style="display:flex;gap:6px;padding:2.5px 0;font-size:8.5pt;border-bottom:1px dashed #eee"><span style="color:#666;min-width:90px;font-size:8pt">For Month</span><span style="font-weight:600;color:#1a3a6b">${r.forMonth}</span></div>`:''}
+      </div>
+      <div>
+        <div style="display:flex;gap:6px;padding:2.5px 0;font-size:8.5pt;border-bottom:1px dashed #eee"><span style="color:#666;min-width:90px;font-size:8pt">Date &amp; Time</span><span style="font-weight:600">${fmtDT(r.dt)}</span></div>
+        <div style="display:flex;gap:6px;padding:2.5px 0;font-size:8.5pt;border-bottom:1px dashed #eee"><span style="color:#666;min-width:90px;font-size:8pt">Payment Mode</span><span style="font-weight:600">${r.mode}</span></div>
+        ${r.ref?`<div style="display:flex;gap:6px;padding:2.5px 0;font-size:8.5pt;border-bottom:1px dashed #eee"><span style="color:#666;min-width:90px;font-size:8pt">Ref / Chq No.</span><span style="font-weight:600">${r.ref}</span></div>`:''}
+        ${r.remarks?`<div style="display:flex;gap:6px;padding:2.5px 0;font-size:8.5pt;border-bottom:1px dashed #eee"><span style="color:#666;min-width:90px;font-size:8pt">Remarks</span><span style="font-weight:600">${r.remarks}</span></div>`:''}
+        ${r.vanEnabled&&r.vanRoute?`<div style="display:flex;gap:6px;padding:2.5px 0;font-size:8.5pt;border-bottom:1px dashed #eee"><span style="color:#666;min-width:90px;font-size:8pt">Van Route</span><span style="font-weight:600">${r.vanRoute}</span></div>`:''}
+      </div>
+    </div>
+    <!-- SCHOOL FEES -->
+    <div style="margin-top:5px;border-top:1.5px solid #1a3a6b;padding-top:4px">
+      <div style="font-size:8pt;font-weight:700;color:#1a3a6b;text-transform:uppercase;margin-bottom:3px">School Fees</div>
+      <div style="display:flex;justify-content:space-between;font-size:8.5pt;padding:2px 0;border-bottom:1px dashed #eee"><span>Total Annual Fees</span><span>${inr(r.total)}</span></div>
+      ${r.discount>0?`<div style="display:flex;justify-content:space-between;font-size:8.5pt;padding:2px 0;border-bottom:1px dashed #eee"><span>Discount</span><span style="color:#c8a84b">- ${inr(r.discount)}</span></div>`:''}
+      <div style="display:flex;justify-content:space-between;font-size:9pt;font-weight:800;padding:2px 0;color:#1a3a6b"><span>School Fee Paid (This Receipt)</span><span style="color:#1a7a45">${inr(r.paid)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:8.5pt;padding:2px 0"><span>School Fee Balance</span><span style="font-weight:700;color:${bal>0?'#c0392b':'#1a7a45'}">${inr(bal)}</span></div>
+    </div>
+    ${r.vanEnabled?`
+    <!-- VAN FEES -->
+    <div style="margin-top:5px;border-top:1.5px solid #0d7377;padding-top:4px">
+      <div style="font-size:8pt;font-weight:700;color:#0d7377;text-transform:uppercase;margin-bottom:3px">&#128652; Van / Transport Fees${r.vanRoute?' — '+r.vanRoute:''}</div>
+      <div style="display:flex;justify-content:space-between;font-size:8.5pt;padding:2px 0;border-bottom:1px dashed #eee"><span>Van Monthly Fee</span><span>${inr(r.vanTotal)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:9pt;font-weight:800;padding:2px 0;color:#0d7377"><span>Van Fee Paid (This Receipt)</span><span style="color:#1a7a45">${inr(r.vanPaid)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:8.5pt;padding:2px 0"><span>Van Fee Balance</span><span style="font-weight:700;color:${vBal>0?'#c0392b':'#1a7a45'}">${inr(vBal)}</span></div>
+    </div>`:''}
+    <!-- TOTAL -->
+    <div style="display:flex;justify-content:space-between;font-size:10pt;font-weight:800;padding:4px 6px;background:#f0f4ff;border-radius:5px;margin-top:4px;color:#1a3a6b">
+      <span>Total Paid This Receipt</span><span style="color:#1a7a45">${inr(r.paid + (r.vanEnabled?r.vanPaid:0))}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:5px;padding-top:4px;border-top:1px solid #ddd;font-size:7.5pt;color:#666">
+      <div>${totalBal>0?`<span style="color:#c0392b;font-weight:700">&#9888; TOTAL BALANCE DUE: ${inr(totalBal)} — Please clear at earliest.</span>`:`<span style="color:#1a7a45;font-weight:700">&#10003; All fees fully cleared.</span>`}</div>
+      <div style="text-align:right;border-top:1px solid #aaa;padding-top:3px;min-width:90px">Authorised Signatory</div>
+    </div>`;
+}
+
+function showReceiptModal(rcptNo) {
+  DB = loadDB();
+  const r = DB.records.find(x => x.rcptNo === rcptNo); if (!r) return;
+  currentRcpt = rcptNo;
+  document.getElementById('modal-body').innerHTML = `
+    <div style="border:1.5px solid #1a3a6b;border-radius:8px;padding:1rem">
+      ${buildReceiptHTML(r)}
+    </div>
+    <div style="margin-top:.75rem;text-align:center;font-size:12px;color:#aaa">
+      When printed → 2 receipts on 1 A4 page (School Copy + Student Copy with cut line)
+    </div>`;
+  const mo = document.getElementById('modal-bg');
+  mo.style.display = 'flex';
+}
+function closeModal() { document.getElementById('modal-bg').style.display = 'none'; }
+document.getElementById('modal-bg').addEventListener('click', function(e) { if(e.target===this) closeModal(); });
+
+function quickPrint(rcptNo) { currentRcpt = rcptNo; doPrint(); }
+
+function doPrint() {
+  if (!currentRcpt) return;
+  DB = loadDB();
+  const r = DB.records.find(x => x.rcptNo === currentRcpt); if (!r) return;
+  const bal = r.balance||0;
+  const vBal = r.vanEnabled ? (r.vanBalance||0) : 0;
+  const totalBal = bal + vBal;
+  const totalPaidNow = r.paid + (r.vanEnabled ? r.vanPaid : 0);
+
+  // Build one receipt block — exactly half A4 (140mm usable)
+  const oneReceipt = (copyLabel) => `
+  <div class="rcpt-half">
+    <!-- HEADER -->
+    <div class="rh">
+      <div class="rh-left">
+        <div class="school-name">Lenin Convent English Medium High School</div>
+        <div class="school-sub">Srirangapatna, Karnataka | Affiliated to Karnataka Secondary Education Examination Board</div>
+      </div>
+      <div class="rh-right">
+        <div class="rcpt-label">FEE RECEIPT</div>
+        <div class="rcpt-no">${r.rcptNo}</div>
+        <div class="copy-label">${copyLabel}</div>
+      </div>
+    </div>
+
+    <!-- STUDENT & PAYMENT INFO — 2 columns -->
+    <table class="info-table">
+      <tr>
+        <td class="lbl">Student Name</td><td class="val">${r.name}</td>
+        <td class="lbl">Payment Mode</td><td class="val">${r.mode}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Class &amp; Section</td><td class="val">${r.class}${r.section?' '+r.section:''}</td>
+        <td class="lbl">Date &amp; Time</td><td class="val">${fmtDT(r.dt)}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Session</td><td class="val">${r.session}</td>
+        <td class="lbl">${r.forMonth?'For Month':'Rcpt No.'}</td><td class="val">${r.forMonth||r.rcptNo}</td>
+      </tr>
+      ${r.sid||r.ref?`<tr>
+        <td class="lbl">${r.sid?'Student ID':''}</td><td class="val">${r.sid||''}</td>
+        <td class="lbl">${r.ref?'Ref / Chq No.':''}</td><td class="val">${r.ref||''}</td>
+      </tr>`:''}
+      ${r.remarks?`<tr><td class="lbl">Remarks</td><td class="val" colspan="3">${r.remarks}</td></tr>`:''}
+      ${r.vanEnabled&&r.vanRoute?`<tr><td class="lbl">Van Route</td><td class="val" colspan="3">${r.vanRoute}</td></tr>`:''}
+    </table>
+
+    <!-- FEE BREAKDOWN -->
+    <table class="fee-table">
+      <tr class="fee-head"><td colspan="2">SCHOOL FEES</td></tr>
+      <tr><td>Total Annual Fees</td><td>${inr(r.total)}</td></tr>
+      ${r.discount>0?`<tr><td>Discount</td><td>- ${inr(r.discount)}</td></tr>`:''}
+      <tr class="fee-paid"><td>School Fee Paid (This Receipt)</td><td>${inr(r.paid)}</td></tr>
+      <tr class="fee-bal"><td>School Fee Balance</td><td>${inr(bal)}</td></tr>
+      ${r.vanEnabled?`
+      <tr class="fee-head"><td colspan="2">VAN / TRANSPORT FEES${r.vanRoute?' &mdash; '+r.vanRoute:''}</td></tr>
+      <tr><td>Van Monthly Fee</td><td>${inr(r.vanTotal)}</td></tr>
+      <tr class="fee-paid"><td>Van Fee Paid (This Receipt)</td><td>${inr(r.vanPaid)}</td></tr>
+      <tr class="fee-bal"><td>Van Fee Balance</td><td>${inr(vBal)}</td></tr>`:''}
+      <tr class="grand-total"><td>TOTAL PAID THIS RECEIPT</td><td>${inr(totalPaidNow)}</td></tr>
+    </table>
+
+    <!-- FOOTER -->
+    <div class="rfooter">
+      <div class="status-msg ${totalBal>0?'status-due':'status-ok'}">
+        ${totalBal>0?'&#9888; BALANCE DUE: '+inr(totalBal)+' &mdash; Please clear at earliest.':'&#10003; All fees fully cleared.'}
+      </div>
+      <div class="sign-block">Authorised Signatory</div>
+    </div>
+    <div class="computer-note">Computer-generated receipt. No signature required.</div>
+  </div>`;
+
+  document.getElementById('print-area').innerHTML = `
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif}
+    html,body{width:210mm;margin:0;padding:0;background:#fff;color:#000}
+    @page{size:A4 portrait;margin:8mm 10mm}
+
+    /* Each receipt = exactly half A4 — NO colored backgrounds */
+    .rcpt-half{
+      width:100%;
+      height:134mm;
+      padding:4mm 5mm;
+      border:1pt solid #000;
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+      background:#fff;
+    }
+    .rcpt-half:first-child{border-bottom:none;}
+
+    /* ✂ Cut line between copies */
+    .cut-line{
+      width:100%;height:5mm;
+      display:flex;align-items:center;justify-content:center;
+      font-size:7pt;color:#555;letter-spacing:3px;
+      border-top:1pt dashed #555;border-bottom:1pt dashed #555;
+      background:#fff;
+    }
+
+    /* Header — plain black, no background */
+    .rh{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1.5pt solid #000;padding-bottom:2mm;margin-bottom:2mm}
+    .rh-left{flex:1}
+    .school-name{font-size:11pt;font-weight:800;color:#000;line-height:1.2}
+    .school-sub{font-size:6.5pt;color:#333;margin-top:1px}
+    .rh-right{text-align:right;flex-shrink:0;padding-left:8px}
+    .rcpt-label{font-size:9.5pt;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:1px}
+    .rcpt-no{font-size:8.5pt;font-weight:700;color:#000;margin-top:1px}
+    .copy-label{font-size:6.5pt;color:#444;margin-top:1px;font-style:italic}
+
+    /* Info table — plain black lines */
+    .info-table{width:100%;border-collapse:collapse;margin-bottom:2mm;font-size:8pt}
+    .info-table tr td{padding:1.5px 4px;border-bottom:0.4pt solid #bbb;vertical-align:middle;color:#000}
+    .info-table .lbl{color:#444;width:22%;white-space:nowrap;font-size:7.5pt}
+    .info-table .val{font-weight:600;color:#000;width:28%}
+
+    /* Fee table — NO backgrounds at all, just borders */
+    .fee-table{width:100%;border-collapse:collapse;font-size:8pt;flex:1}
+    .fee-table tr td{padding:1.5px 4px;border-bottom:0.4pt solid #bbb;color:#000}
+    .fee-table tr td:last-child{text-align:right;font-weight:600;white-space:nowrap}
+
+    /* Section heading row — underlined bold text, NO background */
+    .fee-head td{
+      background:#fff!important;
+      color:#000!important;
+      font-weight:700;
+      font-size:8pt;
+      text-transform:uppercase;
+      padding:3px 4px;
+      border-top:1pt solid #000;
+      border-bottom:1pt solid #000;
+      letter-spacing:.05em;
+    }
+
+    /* Amount paid row — bold, single top/bottom border, NO background */
+    .fee-paid td{
+      font-weight:800;
+      color:#000;
+      font-size:8.5pt;
+      border-top:0.75pt solid #000;
+      border-bottom:0.75pt solid #000;
+    }
+
+    .fee-bal td{color:#000;font-size:8pt}
+
+    /* Grand total — double top border, bold, NO background */
+    .grand-total td{
+      font-weight:800;
+      font-size:9pt;
+      color:#000;
+      border-top:1.5pt double #000;
+      border-bottom:1pt solid #000;
+      padding:2.5px 4px;
+    }
+
+    /* Footer */
+    .rfooter{display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto;padding-top:2mm;border-top:0.75pt solid #000}
+    .status-due{color:#000;font-weight:700;font-size:7.5pt}
+    .status-ok{color:#000;font-weight:700;font-size:7.5pt}
+    .sign-block{font-size:7pt;color:#000;border-top:0.75pt solid #000;padding-top:2px;min-width:30mm;text-align:center}
+    .computer-note{font-size:6pt;color:#666;text-align:center;margin-top:1mm}
+  </style>
+
+  <div>
+    ${oneReceipt('Student Copy')}
+    <div class="cut-line">&#9988;&nbsp;&nbsp;MANAGEMENT COPY&nbsp;&nbsp;&#9988;</div>
+    ${oneReceipt('Management Copy')}
+  </div>`;
+
+  setTimeout(() => window.print(), 200);
+}
+</script>
+</body>
+</html>
