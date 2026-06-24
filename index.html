@@ -1235,6 +1235,7 @@ document.getElementById('modal-bg').addEventListener('click', function(e) { if(e
 
 function quickPrint(rcptNo) { currentRcpt = rcptNo; doPrint(); }
 
+
 function fmtDTPrint(iso) {
   if (!iso) return '-';
   return new Date(iso).toLocaleString('en-IN', {
@@ -1253,133 +1254,123 @@ function doPrint() {
   const totalPaidNow = r.paid + (r.vanEnabled ? r.vanPaid : 0);
 
   const oneReceipt = (copyLabel) => `
-  <div class="rcpt-half">
-    <div class="rh">
-      <div class="rh-left">
-        <div class="school-name">Lenin Convent English Medium High School</div>
-        <div class="school-sub">Srirangapatna, Karnataka &nbsp;|&nbsp; Affiliated to Karnataka Secondary Education Examination Board</div>
+  <div class="rcpt">
+    <div class="hdr">
+      <div class="hl">
+        <div class="sn">Lenin Convent English Medium High School</div>
+        <div class="sl">Srirangapatna, Karnataka | Affiliated to Karnataka Secondary Education Examination Board</div>
       </div>
-      <div class="rh-right">
-        <div class="rcpt-label">FEE RECEIPT</div>
-        <div class="rcpt-no">${r.rcptNo}</div>
-        <div class="copy-label">${copyLabel}</div>
+      <div class="hr">
+        <div class="rt">FEE RECEIPT</div>
+        <div class="rn">${r.rcptNo}</div>
+        <div class="rc">${copyLabel}</div>
       </div>
     </div>
-    <table class="info-table">
+    <table class="it">
       <tr>
-        <td class="lbl">Student Name</td><td class="val">${r.name}</td>
-        <td class="lbl">Payment Mode</td><td class="val">${r.mode}</td>
+        <td class="lb">Student Name</td><td class="vl">${r.name}</td>
+        <td class="lb">Payment Mode</td><td class="vl">${r.mode}</td>
+      </tr><tr>
+        <td class="lb">Class &amp; Section</td><td class="vl">${r.class}${r.section?' '+r.section:''}</td>
+        <td class="lb">Date &amp; Time</td><td class="vl">${fmtDTPrint(r.dt)}</td>
+      </tr><tr>
+        <td class="lb">Session</td><td class="vl">${r.session}</td>
+        <td class="lb">${r.forMonth?'For Month':'Receipt No'}</td><td class="vl">${r.forMonth||r.rcptNo}</td>
       </tr>
-      <tr>
-        <td class="lbl">Class &amp; Section</td><td class="val">${r.class}${r.section?' '+r.section:''}</td>
-        <td class="lbl">Date &amp; Time</td><td class="val">${fmtDTPrint(r.dt)}</td>
-      </tr>
-      <tr>
-        <td class="lbl">Session</td><td class="val">${r.session}</td>
-        <td class="lbl">${r.forMonth?'For Month':'Rcpt No.'}</td><td class="val">${r.forMonth||r.rcptNo}</td>
-      </tr>
-      ${r.sid||r.ref?`<tr>
-        <td class="lbl">${r.sid?'Student ID':''}</td><td class="val">${r.sid||''}</td>
-        <td class="lbl">${r.ref?'Ref / Chq No.':''}</td><td class="val">${r.ref||''}</td>
+      ${(r.sid||r.ref)?`<tr>
+        <td class="lb">${r.sid?'Student ID':''}</td><td class="vl">${r.sid||''}</td>
+        <td class="lb">${r.ref?'Ref / Chq No':''}</td><td class="vl">${r.ref||''}</td>
       </tr>`:''}
-      ${r.remarks?`<tr><td class="lbl">Remarks</td><td class="val" colspan="3">${r.remarks}</td></tr>`:''}
-      ${r.vanEnabled&&r.vanRoute?`<tr><td class="lbl">Van Route</td><td class="val" colspan="3">${r.vanRoute}</td></tr>`:''}
+      ${r.remarks?`<tr><td class="lb">Remarks</td><td class="vl" colspan="3">${r.remarks}</td></tr>`:''}
+      ${r.vanEnabled&&r.vanRoute?`<tr><td class="lb">Van Route</td><td class="vl" colspan="3">${r.vanRoute}</td></tr>`:''}
     </table>
-    <table class="fee-table">
-      <tr class="fee-head"><td colspan="2">SCHOOL FEES</td></tr>
+    <table class="ft">
+      <tr><td class="fh" colspan="2">SCHOOL FEES</td></tr>
       <tr><td>Total Annual Fees</td><td>${inr(r.total)}</td></tr>
       ${r.discount>0?`<tr><td>Discount</td><td>- ${inr(r.discount)}</td></tr>`:''}
-      <tr class="fee-paid"><td>School Fee Paid (This Receipt)</td><td>${inr(r.paid)}</td></tr>
-      <tr class="fee-bal"><td>School Fee Balance</td><td>${inr(bal)}</td></tr>
+      <tr class="fp"><td>School Fee Paid (This Receipt)</td><td>${inr(r.paid)}</td></tr>
+      <tr><td>School Fee Balance</td><td>${inr(bal)}</td></tr>
       ${r.vanEnabled?`
-      <tr class="fee-head"><td colspan="2">VAN / TRANSPORT FEES${r.vanRoute?' &mdash; '+r.vanRoute:''}</td></tr>
+      <tr><td class="fh" colspan="2">VAN / TRANSPORT FEES${r.vanRoute?' — '+r.vanRoute:''}</td></tr>
       <tr><td>Van Monthly Fee</td><td>${inr(r.vanTotal)}</td></tr>
-      <tr class="fee-paid"><td>Van Fee Paid (This Receipt)</td><td>${inr(r.vanPaid)}</td></tr>
-      <tr class="fee-bal"><td>Van Fee Balance</td><td>${inr(vBal)}</td></tr>`:''}
-      <tr class="grand-total"><td>TOTAL PAID THIS RECEIPT</td><td>${inr(totalPaidNow)}</td></tr>
+      <tr class="fp"><td>Van Fee Paid (This Receipt)</td><td>${inr(r.vanPaid)}</td></tr>
+      <tr><td>Van Fee Balance</td><td>${inr(vBal)}</td></tr>`:''}
+      <tr class="gt"><td>TOTAL PAID THIS RECEIPT</td><td>${inr(totalPaidNow)}</td></tr>
     </table>
-    <div class="rfooter">
-      <div class="${totalBal>0?'status-due':'status-ok'}">
-        ${totalBal>0?'&#9888; BALANCE DUE: '+inr(totalBal)+' &mdash; Please clear at earliest.':'&#10003; All fees fully cleared.'}
+    <div class="ftr">
+      <div class="${totalBal>0?'bd':'bc'}">
+        ${totalBal>0?'&#9888; BALANCE DUE: '+inr(totalBal)+' — Please clear at earliest.':'&#10003; All fees fully cleared.'}
       </div>
-      <div class="sign-block">Authorised Signatory</div>
+      <div class="sg">Authorised Signatory</div>
     </div>
-    <div class="computer-note">Computer-generated receipt. No signature required.</div>
+    <div class="cn">Computer-generated receipt. No signature required.</div>
   </div>`;
 
-  // Write receipt to print area
-  document.getElementById('print-area').innerHTML = `
+  // Open fresh print window — app screen stays completely normal
+  const pw = window.open('', '_blank', 'width=820,height=1160,scrollbars=yes');
+  pw.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Receipt ${r.rcptNo}</title>
   <style>
-    *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#000}
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif}
+    html,body{width:210mm;background:#fff;color:#000}
     @page{size:A4 portrait;margin:8mm 10mm}
+    @media print{.np{display:none!important}}
 
-    .rcpt-half{
-      width:100%;height:134mm;
-      padding:4mm 6mm;
-      border:1pt solid #000;
-      display:flex;flex-direction:column;
-      overflow:hidden;
-      page-break-inside:avoid;
-    }
-    .rcpt-half:first-child{border-bottom:none}
+    .np{text-align:center;padding:10px 0 6px;background:#f0f4f8;border-bottom:1px solid #ddd}
+    .pbtn{background:#1a3a6b;color:#fff;border:none;padding:9px 22px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;margin:0 4px}
+    .pbtn2{background:#666;color:#fff;border:none;padding:9px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;margin:0 4px}
+    .ptip{font-size:11px;color:#666;margin-top:5px}
 
-    .cut-line{
-      width:100%;height:5mm;
-      display:flex;align-items:center;justify-content:center;
-      font-size:7pt;color:#444;letter-spacing:3px;
-      border-top:1pt dashed #444;border-bottom:1pt dashed #444;
-    }
+    .rcpt{width:100%;height:135mm;padding:5mm 7mm;border:1pt solid #000;
+          display:flex;flex-direction:column;overflow:hidden}
+    .rcpt:first-of-type{border-bottom:none}
 
-    .rh{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1.5pt solid #000;padding-bottom:2mm;margin-bottom:2mm}
-    .rh-left{flex:1}
-    .school-name{font-size:11pt;font-weight:800;line-height:1.2}
-    .school-sub{font-size:6.5pt;color:#333;margin-top:1px}
-    .rh-right{text-align:right;flex-shrink:0;padding-left:8px}
-    .rcpt-label{font-size:9pt;font-weight:700;text-transform:uppercase;letter-spacing:1px}
-    .rcpt-no{font-size:8.5pt;font-weight:700;margin-top:1px}
-    .copy-label{font-size:6.5pt;color:#444;margin-top:1px;font-style:italic}
+    .cut{height:5mm;width:100%;display:flex;align-items:center;justify-content:center;
+         font-size:7pt;color:#333;letter-spacing:4px;
+         border-top:1pt dashed #555;border-bottom:1pt dashed #555}
 
-    .info-table{width:100%;border-collapse:collapse;margin-bottom:2mm;font-size:8pt}
-    .info-table td{padding:2px 4px;border-bottom:0.4pt solid #ccc;vertical-align:middle}
-    .lbl{color:#333;width:22%;font-size:7.5pt;white-space:nowrap}
-    .val{font-weight:600;width:28%}
+    .hdr{display:flex;justify-content:space-between;align-items:flex-start;
+         border-bottom:1.5pt solid #000;padding-bottom:2.5mm;margin-bottom:2mm}
+    .hl{flex:1}
+    .sn{font-size:11.5pt;font-weight:800;line-height:1.2}
+    .sl{font-size:6.5pt;color:#333;margin-top:1px}
+    .hr{text-align:right;flex-shrink:0;padding-left:8px}
+    .rt{font-size:9.5pt;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+    .rn{font-size:8.5pt;font-weight:700;margin-top:2px}
+    .rc{font-size:6.5pt;color:#555;font-style:italic;margin-top:1px}
 
-    .fee-table{width:100%;border-collapse:collapse;font-size:8pt;flex:1}
-    .fee-table td{padding:2px 4px;border-bottom:0.4pt solid #ccc}
-    .fee-table td:last-child{text-align:right;font-weight:600;white-space:nowrap}
+    .it{width:100%;border-collapse:collapse;margin-bottom:2mm;font-size:8pt}
+    .it td{padding:2px 4px;border-bottom:0.4pt solid #ccc;vertical-align:middle}
+    .lb{color:#444;width:21%;font-size:7.5pt;white-space:nowrap}
+    .vl{font-weight:600;width:29%}
 
-    .fee-head td{
-      font-weight:700;font-size:8pt;text-transform:uppercase;
-      padding:3px 4px;letter-spacing:.04em;
-      border-top:1pt solid #000;border-bottom:1pt solid #000;
-    }
-    .fee-paid td{font-weight:800;font-size:8.5pt;border-top:0.75pt solid #000;border-bottom:0.75pt solid #000}
-    .fee-bal td{font-size:8pt}
-    .grand-total td{font-weight:800;font-size:9pt;border-top:1.5pt double #000;border-bottom:1pt solid #000;padding:3px 4px}
+    .ft{width:100%;border-collapse:collapse;font-size:8.5pt;flex:1}
+    .ft td{padding:2px 5px;border-bottom:0.4pt solid #ccc}
+    .ft td:last-child{text-align:right;font-weight:600;white-space:nowrap}
+    .fh{font-weight:700;font-size:8pt;text-transform:uppercase;letter-spacing:.04em;
+        border-top:1pt solid #000!important;border-bottom:1pt solid #000!important;padding:2.5px 5px!important}
+    .fp td{font-weight:800;font-size:9pt;border-top:0.75pt solid #000;border-bottom:0.75pt solid #000}
+    .gt td{font-weight:800;font-size:9.5pt;border-top:2pt double #000;border-bottom:1pt solid #000;padding:3px 5px}
 
-    .rfooter{display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto;padding-top:2mm;border-top:0.75pt solid #000}
-    .status-due{font-weight:700;font-size:7.5pt}
-    .status-ok{font-weight:700;font-size:7.5pt}
-    .sign-block{font-size:7pt;border-top:0.75pt solid #000;padding-top:2px;min-width:30mm;text-align:center}
-    .computer-note{font-size:6pt;color:#555;text-align:center;margin-top:1.5mm}
+    .ftr{display:flex;justify-content:space-between;align-items:flex-end;
+         margin-top:auto;padding-top:2mm;border-top:0.75pt solid #000}
+    .bd{font-weight:700;font-size:7.5pt}
+    .bc{font-weight:700;font-size:7.5pt}
+    .sg{font-size:7pt;border-top:0.75pt solid #000;padding-top:2px;min-width:32mm;text-align:center}
+    .cn{font-size:6pt;color:#555;text-align:center;margin-top:1.5mm}
   </style>
-  <div>
-    ${oneReceipt('Student Copy')}
-    <div class="cut-line">&#9988;&nbsp; MANAGEMENT COPY &nbsp;&#9988;</div>
-    ${oneReceipt('Management Copy')}
-  </div>`;
-
-  // Print then restore screen size properly
-  setTimeout(() => {
-    window.print();
-    // Restore viewport after print so screen doesn't shrink
-    setTimeout(() => {
-      document.getElementById('print-area').innerHTML = '';
-      window.scrollTo(0,0);
-      document.body.style.zoom = '';
-      document.querySelector('meta[name=viewport]').content = 'width=device-width, initial-scale=1.0';
-    }, 1000);
-  }, 200);
+  </head><body>
+  <div class="np">
+    <button class="pbtn" onclick="window.print()">&#128424; Print Receipt</button>
+    <button class="pbtn2" onclick="window.close()">&#10005; Close</button>
+    <div class="ptip">Top = Parent Copy &nbsp;|&nbsp; Bottom = Management Copy &nbsp;|&nbsp; Cut along dotted line &#9988;</div>
+  </div>
+  ${oneReceipt('Parent Copy')}
+  <div class="cut">&#9988; &nbsp; MANAGEMENT COPY &nbsp; &#9988;</div>
+  ${oneReceipt('Management Copy')}
+  <script>setTimeout(function(){window.print();},500);<\/script>
+  </body></html>`);
+  pw.document.close();
 }
 </script>
 </body>
