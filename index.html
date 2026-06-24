@@ -691,7 +691,9 @@ function submitEntry() {
   renderStats();
   renderTable();
   updateFollowupBadge();
-  showReceiptModal(rcptNo);
+  // Directly open print window with 2 copies — no popup
+  currentRcpt = rcptNo;
+  doPrint();
 }
 
 // ══════════════════════════════════════════════════
