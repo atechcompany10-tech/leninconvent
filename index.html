@@ -211,7 +211,9 @@ tr:hover td{background:#fafbff}
           </div>
           <div class="ff">
             <label>&#128336; Entry Time</label>
-            <input type="time" id="f-time" style="width:100%;padding:8px 11px;border:1.5px solid #dde3ee;border-radius:7px;font-size:13px;outline:none">
+            <input type="text" id="f-time-display" readonly
+              style="width:100%;padding:8px 11px;border:1.5px solid #dde3ee;border-radius:7px;font-size:13px;background:#f4f6f9;color:#1a2744;font-weight:600">
+            <input type="hidden" id="f-time">
           </div>
         </div>
 
@@ -242,12 +244,24 @@ tr:hover td{background:#fafbff}
 
         <!-- PAYMENT -->
         <div style="font-size:11px;font-weight:700;color:#1a3a6b;text-transform:uppercase;letter-spacing:.06em;padding:.4rem 0 .4rem;border-bottom:1px solid #f0f4f8;margin-bottom:.75rem">&#128179; Payment Details</div>
-        <div class="fgrid fgrid-4">
-          <div class="ff"><label>Payment Mode &#42;</label><select id="f-mode"><option value="">Select Mode</option><option>Cash</option><option>UPI / GPay</option><option>Cheque</option><option>NEFT / RTGS</option><option>DD</option><option>Card</option></select></div>
-          <div class="ff"><label>Reference / Cheque No.</label><input type="text" id="f-ref" placeholder="Optional"></div>
-          <div class="ff"><label>For Month (e.g. June 2025)</label><input type="text" id="f-month" placeholder="e.g. June 2025"></div>
+        <div class="fgrid fgrid-2">
+          <div class="ff">
+            <label>Payment Mode &#42;</label>
+            <select id="f-mode">
+              <option value="">Select Mode</option>
+              <option value="Cash">Cash</option>
+              <option value="UPI / GPay">UPI / GPay</option>
+              <option value="Cheque">Cheque</option>
+              <option value="NEFT / RTGS">NEFT / RTGS</option>
+              <option value="DD">DD</option>
+              <option value="Card">Card</option>
+            </select>
+          </div>
           <div class="ff"><label>Remarks / Notes</label><input type="text" id="f-remarks" placeholder="Optional"></div>
         </div>
+        <!-- Hidden fields kept for data compatibility -->
+        <input type="hidden" id="f-ref" value="">
+        <input type="hidden" id="f-month" value="">
         <div class="err-msg" id="form-err">Please fill all required fields (marked *).</div>
       </div>
 
@@ -509,15 +523,22 @@ function saveDB() {
 // ══════════════════════════════════════════════════
 function updateClock() {
   const now = new Date();
-  // Set date & time fields to current if they are empty (first load)
-  const fd = document.getElementById('f-date');
+  // Hidden time field (24hr for ISO storage)
   const ft = document.getElementById('f-time');
-  if (fd && !fd.value) fd.value = now.toISOString().slice(0,10);
   if (ft && !ft.value) ft.value = now.toTimeString().slice(0,5);
+  // Visible display field (AM/PM format)
+  const fd = document.getElementById('f-date');
+  if (fd && !fd.value) fd.value = now.toISOString().slice(0,10);
+  const ftd = document.getElementById('f-time-display');
+  if (ftd) {
+    ftd.value = now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', hour12:true});
+    // Keep hidden field in sync
+    if (ft) ft.value = now.toTimeString().slice(0,5);
+  }
   const cl = document.getElementById('clock');
   if (cl) cl.textContent = now.toLocaleString('en-IN', {weekday:'short',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true});
 }
-setInterval(updateClock, 30000);
+setInterval(updateClock, 60000);
 updateClock();
 
 // ══════════════════════════════════════════════════
@@ -643,10 +664,12 @@ function clearForm() {
   });
   document.getElementById('f-van-enable').checked = false;
   document.getElementById('van-fields').style.display = 'none';
-  // Reset date/time to now
+  // Reset date/time to now with AM/PM display
   const now = new Date();
   document.getElementById('f-date').value = now.toISOString().slice(0,10);
   document.getElementById('f-time').value = now.toTimeString().slice(0,5);
+  const ftd = document.getElementById('f-time-display');
+  if (ftd) ftd.value = now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', hour12:true});
 }
 function submitEntry() {
   const name = document.getElementById('f-name').value.trim();
